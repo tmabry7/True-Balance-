@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>True Balance</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c26;
+  --border:rgba(255,255,255,0.07); --text:#f0f0f8; --muted:#6b6b80;
+  --green:#34d399; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --accent:#7c6af7;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;min-height:-webkit-fill-available;overflow-x:hidden}
+.app{max-width:430px;margin:0 auto;padding:0 0 90px}
+.safe-top{height:env(safe-area-inset-top,44px)}
+
+/* Nav tabs */
+.tabs{display:flex;gap:6px;margin:10px 16px 0;background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:5px}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:12px;font-weight:500;color:var(–muted);border-radius:11px;cursor:pointer;transition:all .2s}
+.tab.active{background:var(–surface2);color:var(–text);border:1px solid var(–border)}
+.tab:active{transform:scale(0.97)}
+.page{display:none}.page.active{display:block}
+
+/* Header */
+.header{padding:16px 24px 8px;display:flex;align-items:center;justify-content:space-between}
+.header-title{font-family:‘DM Mono’,monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(–muted)}
+.edit-btn{background:var(–surface2);border:1px solid var(–border);color:var(–muted);font-family:‘DM Sans’,sans-serif;font-size:12px;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .2s}
+.edit-btn:active{transform:scale(0.96)}
+
+/* Cards */
+.card{margin:10px 16px 0;background:var(–surface);border:1px solid var(–border);border-radius:20px;padding:18px 18px}
+.card-glow::before{content:’’;position:absolute;top:-60px;right:-60px;width:180px;height:180px;background:radial-gradient(circle,var(–accent) 0%,transparent 70%);opacity:.08;pointer-events:none}
+.card.relative{position:relative;overflow:hidden}
+
+/* Account inputs */
+.accounts-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 16px 0}
+.acct-card{background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:14px 16px}
+.acct-label{font-size:10px;color:var(–muted);letter-spacing:.08em;margin-bottom:6px}
+.acct-row{display:flex;align-items:center;gap:4px}
+.acct-dollar{font-family:‘DM Mono’,monospace;font-size:15px;color:var(–muted)}
+.acct-input{background:none;border:none;outline:none;font-family:‘DM Mono’,monospace;font-size:20px;color:var(–text);width:100%;-webkit-appearance:none}
+.acct-input::placeholder{color:var(–muted)}
+
+/* Balance */
+.bal-label{font-family:‘DM Mono’,monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(–muted);margin-bottom:4px}
+.bal-sub{font-size:12px;color:var(–muted);margin-bottom:8px}
+.bal-sub span{color:var(–blue);font-weight:500}
+.bal-amount{font-family:‘DM Mono’,monospace;font-size:46px;font-weight:500;line-height:1;transition:color .4s}
+.bal-amount.positive{color:var(–green)}.bal-amount.warning{color:var(–amber)}.bal-amount.negative{color:var(–red)}
+.bal-meta{margin-top:16px;padding-top:16px;border-top:1px solid var(–border);display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ml{font-size:10px;color:var(–muted);margin-bottom:3px}
+.mv{font-family:‘DM Mono’,monospace;font-size:14px}
+.mv.green{color:var(–green)}.mv.red{color:var(–red)}.mv.amber{color:var(–amber)}.mv.muted{color:var(–muted)}
+.status-bar{margin-top:14px;background:var(–surface2);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sdot.green{background:var(–green);box-shadow:0 0 6px var(–green)}
+.sdot.amber{background:var(–amber);box-shadow:0 0 6px var(–amber)}
+.sdot.red{background:var(–red);box-shadow:0 0 6px var(–red)}
+.stext{font-size:13px;line-height:1.4}
+
+/* Payday strip */
+.payday-strip{margin:10px 16px 0;background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.pd-left{display:flex;align-items:center;gap:10px}
+.pd-days{font-family:‘DM Mono’,monospace;font-size:18px;color:var(–blue)}
+.pd-date{font-size:11px;color:var(–muted);margin-top:1px}
+.pd-amt{font-family:‘DM Mono’,monospace;font-size:16px;color:var(–green)}
+
+/* Monthly summary */
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.mrow-label{font-size:12px;color:var(–muted)}
+.mrow-val{font-family:‘DM Mono’,monospace;font-size:12px}
+.mnet{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(–border)}
+.mnet-label{font-size:13px;font-weight:500}
+.mnet-val{font-family:‘DM Mono’,monospace;font-size:14px;font-weight:500}
+
+/* Bar */
+.bar-track{background:var(–surface2);border-radius:4px;height:6px;overflow:hidden;margin:8px 0 4px}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s}
+.bar-fill.accent{background:linear-gradient(90deg,var(–accent),var(–blue))}
+.bar-fill.blue{background:linear-gradient(90deg,var(–blue),var(–green))}
+.bar-fill.red{background:linear-gradient(90deg,var(–red),var(–amber))}
+.bar-labels{display:flex;justify-content:space-between}
+.bar-label{font-size:10px;color:var(–muted)}
+
+/* Section */
+.section{margin:14px 16px 0}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px}
+.sec-title{font-family:‘DM Mono’,monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(–muted)}
+.sec-total{font-family:‘DM Mono’,monospace;font-size:12px;color:var(–red)}
+.bill-list{display:flex;flex-direction:column;gap:2px}
+.bill-item{background:var(–surface);border:1px solid var(–border);border-radius:6px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.bill-item:first-child{border-radius:12px 12px 6px 6px}
+.bill-item:last-child{border-radius:6px 6px 12px 12px}
+.bill-item:only-child{border-radius:12px}
+.bill-item.in-window{border-color:rgba(248,113,113,.3);background:linear-gradient(135deg,var(–surface),rgba(248,113,113,.04))}
+.bicon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.bname{flex:1;font-size:14px}
+.bright{text-align:right;flex-shrink:0}
+.bamt{font-family:‘DM Mono’,monospace;font-size:14px}
+.bamt.fixed{color:var(–red)}.bamt.bnpl{color:var(–accent)}.bamt.car{color:var(–blue)}
+.bstatus{font-size:10px;margin-top:1px}
+.bstatus.urgent{color:var(–red);font-weight:500}.bstatus.soon{color:var(–amber)}.bstatus.later{color:var(–muted)}
+.brem{font-size:10px;color:var(–muted);margin-top:1px}
+
+/* NFCU card */
+.nfcu-extra-row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;padding-top:14px;border-top:1px solid var(–border)}
+.nfcu-bal{font-family:‘DM Mono’,monospace;font-size:26px;color:var(–blue);margin-top:3px}
+.nfcu-payoff{font-family:‘DM Mono’,monospace;font-size:14px;color:var(–green);margin-top:3px}
+.nfcu-pmt{font-family:‘DM Mono’,monospace;font-size:16px;color:var(–text);margin-top:3px}
+.nfcu-badge{font-size:13px;color:var(–green);margin-left:6px}
+.ntip{margin-top:12px;padding:10px 12px;background:var(–surface2);border-radius:10px;font-size:12px;color:var(–muted);line-height:1.5}
+.ntip.good{color:var(–green)}
+
+/* ── SNOWBALL PAGE ── */
+.snowball-hero{margin:10px 16px 0;background:var(–surface);border:1px solid var(–border);border-radius:20px;padding:20px 18px;position:relative;overflow:hidden}
+.snowball-hero::before{content:’’;position:absolute;top:-50px;right:-50px;width:150px;height:150px;background:radial-gradient(circle,var(–green) 0%,transparent 70%);opacity:.06;pointer-events:none}
+.sb-total-label{font-family:‘DM Mono’,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(–muted);margin-bottom:4px}
+.sb-total{font-family:‘DM Mono’,monospace;font-size:38px;font-weight:500;color:var(–red)}
+.sb-sub{font-size:12px;color:var(–muted);margin-top:4px}
+.sb-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(–border)}
+
+.extra-card{margin:10px 16px 0;background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:16px 18px}
+.extra-top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.extra-label-wrap{}
+.extra-label{font-family:‘DM Mono’,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(–muted);margin-bottom:4px}
+.extra-note{font-size:11px;color:var(–muted);line-height:1.4}
+.extra-input-wrap{display:flex;align-items:center;gap:4px}
+.extra-dollar{font-family:‘DM Mono’,monospace;font-size:18px;color:var(–muted)}
+.extra-input{background:none;border:none;outline:none;font-family:‘DM Mono’,monospace;font-size:28px;color:var(–green);width:120px;text-align:right;-webkit-appearance:none}
+.extra-input::placeholder{color:var(–muted)}
+.sb-result{background:var(–surface2);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sbr-label{font-size:10px;color:var(–muted);margin-bottom:3px}
+.sbr-val{font-family:‘DM Mono’,monospace;font-size:14px}
+
+.debt-list{margin:14px 16px 0}
+.debt-sec-title{font-family:‘DM Mono’,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(–muted);padding:0 4px;margin-bottom:8px}
+.debt-item{background:var(–surface);border:1px solid var(–border);border-radius:6px;padding:12px 16px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.debt-item:first-child{border-radius:12px 12px 6px 6px}
+.debt-item:last-child{border-radius:6px 6px 12px 12px}
+.debt-item:only-child{border-radius:12px}
+.debt-item.target{border-color:rgba(52,211,153,.25);background:linear-gradient(135deg,var(–surface),rgba(52,211,153,.04))}
+.debt-rank{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);width:18px;flex-shrink:0;text-align:center}
+.debt-info{flex:1;min-width:0}
+.debt-name{font-size:14px}
+.debt-meta{font-size:11px;color:var(–muted);margin-top:1px}
+.debt-right{text-align:right;flex-shrink:0}
+.debt-bal{font-family:‘DM Mono’,monospace;font-size:14px}
+.debt-payoff{font-size:10px;color:var(–muted);margin-top:2px}
+.debt-payoff.soon{color:var(–green)}
+.debt-bar-wrap{width:60px;margin-top:4px}
+.debt-bar-bg{background:var(–surface2);border-radius:2px;height:3px;overflow:hidden}
+.debt-bar-fg{height:100%;border-radius:2px;background:var(–accent);transition:width .5s}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(–surface);border:1px solid var(–border);border-radius:28px 28px 0 0;width:100%;max-width:430px;padding:20px 20px env(safe-area-inset-bottom,20px);max-height:88vh;overflow-y:auto;animation:slideUp .3s cubic-bezier(.32,.72,0,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(–border);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:4px;padding:0 4px}
+.modal-sub{font-size:12px;color:var(–muted);padding:0 4px;margin-bottom:4px;line-height:1.5}
+.msec{font-family:‘DM Mono’,monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(–muted);margin:18px 0 8px 4px}
+.mrow-edit{display:flex;align-items:center;gap:8px;background:var(–surface2);border:1px solid var(–border);border-radius:12px;padding:11px 14px;margin-bottom:5px}
+.mrow-icon{font-size:15px;width:18px;text-align:center}
+.mrow-name{flex:1;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.minput{background:none;border:none;outline:none;font-family:‘DM Mono’,monospace;font-size:14px;color:var(–text);width:80px;text-align:right;-webkit-appearance:none}
+.mdayinput{background:none;border:none;outline:none;font-family:‘DM Mono’,monospace;font-size:13px;color:var(–blue);width:28px;text-align:center;-webkit-appearance:none}
+.msmall{font-size:10px;color:var(–muted);flex-shrink:0}
+.modal-close{width:100%;padding:16px;margin-top:16px;background:var(–accent);border:none;border-radius:16px;color:white;font-family:‘DM Sans’,sans-serif;font-size:16px;font-weight:600;cursor:pointer}
+.modal-close:active{opacity:.85}
+
+.fade-in{animation:fadeIn .45s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.s1{animation-delay:.04s}.s2{animation-delay:.08s}.s3{animation-delay:.12s}.s4{animation-delay:.16s}.s5{animation-delay:.20s}.s6{animation-delay:.24s}
+</style>
+
+</head>
+<body>
+<div class="safe-top"></div>
+<div class="app">
+
+<div class="header fade-in">
+  <div class="header-title">True Balance</div>
+  <button class="edit-btn" onclick="openModal()">Edit Bills</button>
+</div>
+
+<!-- TABS -->
+
+<div class="tabs fade-in s1">
+  <div class="tab active" onclick="showPage('balance')">Balance</div>
+  <div class="tab" onclick="showPage('bills')">Bills</div>
+  <div class="tab" onclick="showPage('snowball')">Snowball</div>
+</div>
+
+<!-- ══ BALANCE PAGE ══ -->
+
+<div class="page active" id="page-balance">
+
+  <div class="accounts-row fade-in s2">
+    <div class="acct-card">
+      <div class="acct-label">PRIMARY CHECKING</div>
+      <div class="acct-row"><span class="acct-dollar">$</span>
+        <input class="acct-input" id="primaryInput" type="number" inputmode="decimal" placeholder="0" oninput="recalc()">
+      </div>
+    </div>
+    <div class="acct-card">
+      <div class="acct-label">GROCERY ACCOUNT</div>
+      <div class="acct-row"><span class="acct-dollar">$</span>
+        <input class="acct-input" id="groceryInput" type="number" inputmode="decimal" placeholder="700" oninput="recalc()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card relative card-glow fade-in s2" style="margin-top:10px">
+    <div class="bal-label">True Available Balance</div>
+    <div class="bal-sub">Primary minus bills due before <span id="nextPaydayLabel">next payday</span></div>
+    <div class="bal-amount positive" id="trueBalAmt">$—</div>
+    <div class="bal-meta">
+      <div><div class="ml">Primary checking</div><div class="mv muted" id="metaBank">—</div></div>
+      <div><div class="ml">Due before payday</div><div class="mv red" id="metaWindow">—</div></div>
+      <div><div class="ml">Due within 3 days</div><div class="mv amber" id="metaUrgent">—</div></div>
+      <div><div class="ml">Grocery envelope</div><div class="mv green" id="metaGrocery">—</div></div>
+    </div>
+    <div class="status-bar">
+      <div class="sdot green" id="statusDot"></div>
+      <div class="stext" id="statusText">Enter your current balance above.</div>
+    </div>
+  </div>
+
+  <div class="payday-strip fade-in s3">
+    <div class="pd-left">
+      <div style="font-size:18px">💸</div>
+      <div>
+        <div style="font-size:11px;color:var(--muted)">Next payday</div>
+        <div class="pd-days" id="paydayDays">—</div>
+        <div class="pd-date" id="paydayDate">—</div>
+      </div>
+    </div>
+    <div class="pd-amt" id="paydayAmt">+$—</div>
+  </div>
+
+  <div class="card fade-in s3" style="margin-top:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)">Monthly Committed</div>
+      <div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--red)" id="monthlyTotal">—</div>
+    </div>
+    <div class="mrow"><div class="mrow-label">Fixed bills</div><div class="mrow-val" id="mFixed" style="color:var(--red)">—</div></div>
+    <div class="mrow"><div class="mrow-label">Affirm & Klarna</div><div class="mrow-val" id="mBnpl" style="color:var(--accent)">—</div></div>
+    <div class="mrow"><div class="mrow-label">Car loans</div><div class="mrow-val" id="mCars" style="color:var(--blue)">—</div></div>
+    <div class="mrow"><div class="mrow-label">Income</div><div class="mrow-val" style="color:var(--green)">$11,200</div></div>
+    <div class="mnet">
+      <div class="mnet-label">Left for everything else</div>
+      <div class="mnet-val" id="mNetLeft">—</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ BILLS PAGE ══ -->
+
+<div class="page" id="page-bills">
+
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Fixed Bills</div><div class="sec-total" id="fixedTotal"></div></div>
+    <div class="bill-list" id="fixedList"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Affirm & Klarna</div><div class="sec-total" id="bnplTotal"></div></div>
+    <div class="bill-list" id="bnplList"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Car Loans</div><div class="sec-total" id="carTotal"></div></div>
+    <div class="bill-list" id="carList"></div>
+  </div>
+
+  <!-- NFCU -->
+
+  <div class="section">
+    <div class="sec-header"><div class="sec-title">Navy Federal Loan</div><div class="sec-total" id="nfcuPmt"></div></div>
+    <div class="card" style="margin:0">
+      <div style="display:flex;justify-content:space-between">
+        <div><div class="ml">Remaining</div><div class="nfcu-bal" id="nfcuBal">$7,457</div></div>
+        <div style="text-align:right"><div class="ml">Payoff</div><div class="nfcu-payoff" id="nfcuPayoffDate">—</div></div>
+      </div>
+      <div class="bar-track"><div class="bar-fill blue" id="nfcuBar" style="width:100%"></div></div>
+      <div class="bar-labels"><div class="bar-label" id="nfcuInterest">—</div><div class="bar-label" id="nfcuMonths">—</div></div>
+      <div class="nfcu-extra-row">
+        <div>
+          <div class="ml">Payment</div>
+          <div class="nfcu-pmt">$<span id="nfcuMin">190</span>/mo
+            <span class="nfcu-badge" id="nfcuBadge" style="display:none">+$<span id="nfcuExtraDisplay">0</span></span>
+          </div>
+        </div>
+        <div>
+          <div class="ml" style="text-align:right">Extra/mo</div>
+          <div style="display:flex;align-items:center;gap:3px;justify-content:flex-end">
+            <span class="acct-dollar">+$</span>
+            <input class="acct-input" style="font-size:18px;width:80px;text-align:right" id="nfcuExtra" type="number" inputmode="decimal" placeholder="0" oninput="recalc()">
+          </div>
+        </div>
+      </div>
+      <div class="ntip" id="nfcuTip"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ SNOWBALL PAGE ══ -->
+
+<div class="page" id="page-snowball">
+
+  <div class="snowball-hero fade-in s1">
+    <div class="sb-total-label">Total Debt</div>
+    <div class="sb-total" id="sbTotalDebt">$43,325</div>
+    <div class="sb-sub">Across all loans · minimums only = debt-free <span id="sbBasePayoff" style="color:var(--amber)">—</span></div>
+    <div class="sb-meta">
+      <div><div class="ml">High-interest (&gt;10%)</div><div class="mv red" id="sbHighInterest">—</div></div>
+      <div><div class="ml">Low-interest (&lt;10%)</div><div class="mv blue" id="sbLowInterest">—</div></div>
+      <div><div class="ml">0% BNPL</div><div class="mv muted" id="sbBnpl">—</div></div>
+      <div><div class="ml">Total interest (min)</div><div class="mv amber" id="sbBaseInterest">—</div></div>
+    </div>
+  </div>
+
+  <div class="extra-card fade-in s2">
+    <div class="extra-top">
+      <div class="extra-label-wrap">
+        <div class="extra-label">Extra Payment / Month</div>
+        <div class="extra-note">Any amount helps. Type $0 to<br>see minimums-only timeline.</div>
+      </div>
+      <div class="extra-input-wrap">
+        <span class="extra-dollar">+$</span>
+        <input class="extra-input" id="extraPayment" type="number" inputmode="decimal" placeholder="0" oninput="recalc()">
+      </div>
+    </div>
+    <div class="sb-result">
+      <div><div class="sbr-label">Debt-free by</div><div class="sbr-val" id="sbPayoffDate" style="color:var(--green)">—</div></div>
+      <div><div class="sbr-label">Months away</div><div class="sbr-val" id="sbMonths" style="color:var(--green)">—</div></div>
+      <div><div class="sbr-label">Total interest</div><div class="sbr-val" id="sbInterest" style="color:var(--amber)">—</div></div>
+      <div><div class="sbr-label">Interest saved</div><div class="sbr-val" id="sbSaved" style="color:var(--green)">—</div></div>
+    </div>
+  </div>
+
+  <div class="debt-list fade-in s3">
+    <div class="debt-sec-title">Payoff Order — Next Target First</div>
+    <div id="debtOrderList"></div>
+  </div>
+
+</div>
+</div><!-- /app -->
+
+<!-- Modal -->
+
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Edit Bills & Loans</div>
+    <div class="modal-sub">Changes save automatically. Update balances as you pay things down.</div>
+    <div class="msec">Paycheck Schedule</div><div id="paycheckEd"></div>
+    <div class="msec">Fixed Bills</div><div id="fixedEd"></div>
+    <div class="msec">Affirm & Klarna</div><div id="bnplEd"></div>
+    <div class="msec">Car Loans</div><div id="carEd"></div>
+    <div class="msec">Navy Federal & Mariner</div><div id="loanEd"></div>
+    <button class="modal-close" onclick="closeModal()">Done</button>
+  </div>
+</div>
+
+<script>
+const INCOME = 11200;
+const NFCU_ORIG = 7457;
+const TOTAL_DEBT_ORIG = 43324.95;
+
+const defaultData = {
+  paychecks: [
+    {label:'Paycheck (10th)', day:10, amount:3300},
+    {label:'Paycheck (25th)', day:25, amount:3300},
+    {label:'Paycheck (1st)',  day:1,  amount:4500},
+  ],
+  fixed: [
+    {icon:'🏠',name:'Rent',            amount:2100, day:28},
+    {icon:'🦷',name:'MetLife Dental',  amount:180,  day:1},
+    {icon:'💪',name:'Gym',             amount:125,  day:1},
+    {icon:'🛡️',name:'Car Insurance',   amount:280,  day:8},
+    {icon:'🥋',name:'Kids Tae Kwon Do',amount:169,  day:10},
+    {icon:'📱',name:'T-Mobile',        amount:440,  day:27},
+    {icon:'🌐',name:'Internet',        amount:117,  day:9},
+  ],
+  bnpl: [
+    {icon:'🛍️',name:'Affirm #1', amount:155.00, day:10, remaining:215.00},
+    {icon:'🛍️',name:'Affirm #2', amount:202.49, day:18, remaining:2024.00},
+    {icon:'🛍️',name:'Affirm #3', amount:632.17, day:19, remaining:3800.00},
+    {icon:'🛍️',name:'Affirm #4', amount:51.68,  day:25, remaining:391.00},
+    {icon:'🛍️',name:'Affirm #5', amount:8.93,   day:25, remaining:80.00},
+    {icon:'🛍️',name:'Affirm #6', amount:13.78,  day:28, remaining:137.79},
+    {icon:'🟣',name:'Klarna',    amount:83.74,  day:2,  remaining:1500.00},
+  ],
+  cars: [
+    {icon:'🚗',name:'Car Loan 1 ($366)', amount:366, day:4,  balance:13594, apr:6},
+    {icon:'🚙',name:'Car Loan 2 ($607)', amount:607, day:12, balance:6199,  apr:6},
+  ],
+  loans: [
+    {icon:'🏦',name:'Navy Federal',   amount:190, day:11, balance:7457,   apr:18},
+    {icon:'💼',name:'Mariner Finance',amount:338, day:25, balance:7927.16, apr:24},
+  ]
+};
+
+function load(){try{const s=localStorage.getItem('tb_v5');return s?JSON.parse(s):JSON.parse(JSON.stringify(defaultData))}catch{return JSON.parse(JSON.stringify(defaultData))}}
+function save(d){try{localStorage.setItem('tb_v5',JSON.stringify(d))}catch{}}
+let data=load();
+
+// ── Helpers ──
+function now(){return new Date()}
+function nextOcc(day){const d=new Date();const c=new Date(d.getFullYear(),d.getMonth(),day);if(c<=d)c.setMonth(c.getMonth()+1);return c}
+function daysUntil(date){return Math.ceil((date-now())/86400000)}
+function monthDay(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+function fmt(n,dec=0){if(n==null||isNaN(n))return'—';const s=Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});return(n<0?'-':'')+'$'+s}
+
+function getNextPayday(){
+  let best=null,bestDays=Infinity,bestAmt=0;
+  for(const p of data.paychecks){const d=nextOcc(p.day);const days=daysUntil(d);if(days<bestDays){bestDays=days;best=d;bestAmt=p.amount}}
+  return{date:best,days:bestDays,amount:bestAmt}
+}
+
+// ── Snowball sim ──
+function runSnowball(extra){
+  // Order: 0% BNPL smallest first, then by APR desc for interest-bearing
+  const allDebts = [
+    ...data.bnpl.filter(b=>b.remaining>0.01).map(b=>({name:b.name,bal:b.remaining,pmt:b.amount,apr:0,orig:b.amount})),
+    ...data.loans.map(l=>({name:l.name,bal:l.balance,pmt:l.amount,apr:l.apr,orig:l.amount})),
+    ...data.cars.map(c=>({name:c.name,bal:c.balance,pmt:c.amount,apr:c.apr,orig:c.amount})),
+  ];
+  // Sort: 0% by balance asc, then interest-bearing by APR desc, then cars last
+  const zeroPct = allDebts.filter(d=>d.apr===0).sort((a,b)=>a.bal-b.bal);
+  const highApr = allDebts.filter(d=>d.apr>6).sort((a,b)=>b.apr-a.apr);
+  const cars    = allDebts.filter(d=>d.apr===6).sort((a,b)=>a.bal-b.bal);
+  const ordered = [...zeroPct,...highApr,...cars];
+
+  let dc=ordered.map(d=>({...d}));
+  let month=0,totalInterest=0,freed=0,log=[],seen=new Set();
+
+  while(dc.some(d=>d.bal>0.01)&&month<360){
+    month++;
+    dc=dc.map(d=>{
+      if(d.bal<=0.01)return d;
+      const interest=d.bal*(d.apr/100/12);
+      totalInterest+=interest;
+      let bal=d.bal+interest-d.pmt;
+      if(bal<=0.01){if(!seen.has(d.name)){freed+=d.orig;seen.add(d.name);log.push({name:d.name,month});}bal=0;}
+      return{...d,bal};
+    });
+    let pool=extra+freed;
+    for(let i=0;i<dc.length;i++){
+      if(dc[i].bal<=0.01)continue;
+      const pay=Math.min(dc[i].bal,pool);
+      dc[i]={...dc[i],bal:dc[i].bal-pay};pool-=pay;
+      if(dc[i].bal<=0.01){if(!seen.has(dc[i].name)){freed+=dc[i].orig;seen.add(dc[i].name);log.push({name:dc[i].name,month});}dc[i].bal=0;}
+      if(pool<=0)break;
+    }
+  }
+  return{months:month,totalInterest,log,ordered};
+}
+
+function calcPayoff(balance,payment,aprPct){
+  const rate=aprPct/100/12;
+  if(payment<=balance*rate)return null;
+  let b=balance,months=0,ti=0;
+  while(b>0.01&&months<600){const i=b*rate;ti+=i;b=b+i-payment;months++;}
+  return{months,totalInterest:ti};
+}
+
+// ── Main recalc ──
+function recalc(){
+  const primary=parseFloat(document.getElementById('primaryInput').value)||0;
+  const grocery=parseFloat(document.getElementById('groceryInput').value)||700;
+  const pd=getNextPayday();
+
+  // All billable items for window calc
+  const allBillable=[
+    ...data.fixed,
+    ...data.bnpl,
+    ...data.cars.map(c=>({...c,amount:c.amount})),
+    ...data.loans.map(l=>({...l,amount:l.amount})),
+  ];
+  let windowTotal=0,urgentTotal=0;
+  const enriched=allBillable.map(b=>{
+    const next=nextOcc(b.day);const days=daysUntil(next);
+    const inWindow=next<pd.date;
+    if(inWindow)windowTotal+=b.amount;
+    if(days<=3)urgentTotal+=b.amount;
+    return{...b,nextDate:next,daysUntil:days,inWindow};
+  });
+
+  const trueBalance=primary-windowTotal;
+  const fixedMonthly=data.fixed.reduce((s,b)=>s+b.amount,0);
+  const bnplMonthly=data.bnpl.reduce((s,b)=>s+b.amount,0);
+  const carMonthly=data.cars.reduce((s,c)=>s+c.amount,0);
+  const loanMonthly=data.loans.reduce((s,l)=>s+l.amount,0);
+  const totalMonthly=fixedMonthly+bnplMonthly+carMonthly+loanMonthly;
+
+  // ── Balance page ──
+  document.getElementById('nextPaydayLabel').textContent=pd.days<=0?'today (payday!)':monthDay(pd.date);
+  const amtEl=document.getElementById('trueBalAmt');
+  if(primary===0){amtEl.textContent='$—';amtEl.className='bal-amount positive';}
+  else{amtEl.textContent=fmt(trueBalance);amtEl.className='bal-amount '+(trueBalance>=500?'positive':trueBalance>=0?'warning':'negative');}
+  document.getElementById('metaBank').textContent=primary>0?fmt(primary):'—';
+  document.getElementById('metaWindow').textContent=windowTotal>0?fmt(-windowTotal):'$0';
+  document.getElementById('metaUrgent').textContent=urgentTotal>0?fmt(-urgentTotal):'$0';
+  document.getElementById('metaGrocery').textContent=fmt(grocery);
+  const dot=document.getElementById('statusDot'),txt=document.getElementById('statusText');
+  if(primary===0){dot.className='sdot green';txt.textContent='Enter your current balance above.';}
+  else if(trueBalance<0){dot.className='sdot red';txt.textContent=`You're ${fmt(Math.abs(trueBalance))} short of covering bills before ${monthDay(pd.date)}.`;}
+  else if(trueBalance<200){dot.className='sdot red';txt.textContent=`Only ${fmt(trueBalance)} free until ${monthDay(pd.date)}. Essentials only.`;}
+  else if(trueBalance<600){dot.className='sdot amber';txt.textContent=`${fmt(trueBalance)} free until payday on ${monthDay(pd.date)}. Watch every purchase.`;}
+  else{dot.className='sdot green';txt.textContent=`${fmt(trueBalance)} truly available until payday on ${monthDay(pd.date)}.`;}
+  document.getElementById('paydayDays').textContent=pd.days<=0?'Today! 🎉':`${pd.days} days`;
+  document.getElementById('paydayDate').textContent=pd.date?monthDay(pd.date):'—';
+  document.getElementById('paydayAmt').textContent=`+${fmt(pd.amount)}`;
+  document.getElementById('mFixed').textContent=fmt(-fixedMonthly);
+  document.getElementById('mBnpl').textContent=fmt(-bnplMonthly);
+  document.getElementById('mCars').textContent=fmt(-carMonthly);
+  document.getElementById('monthlyTotal').textContent=fmt(-totalMonthly);
+  const netLeft=INCOME-totalMonthly;
+  const netEl=document.getElementById('mNetLeft');
+  netEl.textContent=fmt(netLeft);netEl.style.color=netLeft>=0?'var(--green)':'var(--red)';
+
+  // ── Bills page ──
+  renderBills('fixedList',enriched.filter(b=>data.fixed.find(f=>f.name===b.name)),'fixed','fixedTotal');
+  renderBills('bnplList', enriched.filter(b=>data.bnpl.find(f=>f.name===b.name)), 'bnpl', 'bnplTotal');
+  renderBills('carList',  enriched.filter(b=>data.cars.find(f=>f.name===b.name)), 'car',  'carTotal');
+  // NFCU
+  const nfcuExtra=parseFloat(document.getElementById('nfcuExtra').value)||0;
+  const nfcuLoan=data.loans.find(l=>l.name==='Navy Federal');
+  if(nfcuLoan){
+    const totalPmt=nfcuLoan.amount+nfcuExtra;
+    const res=calcPayoff(nfcuLoan.balance,totalPmt,nfcuLoan.apr);
+    const minRes=calcPayoff(nfcuLoan.balance,nfcuLoan.amount,nfcuLoan.apr);
+    const pct=Math.min(100,(nfcuLoan.balance/NFCU_ORIG)*100);
+    document.getElementById('nfcuBar').style.width=pct+'%';
+    document.getElementById('nfcuBal').textContent=fmt(nfcuLoan.balance,2);
+    document.getElementById('nfcuPmt').textContent=fmt(-totalPmt);
+    document.getElementById('nfcuMin').textContent=nfcuLoan.amount;
+    if(nfcuExtra>0){document.getElementById('nfcuBadge').style.display='inline';document.getElementById('nfcuExtraDisplay').textContent=nfcuExtra;}
+    else document.getElementById('nfcuBadge').style.display='none';
+    if(res){
+      const po=new Date();po.setMonth(po.getMonth()+res.months);
+      document.getElementById('nfcuPayoffDate').textContent=po.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+      document.getElementById('nfcuMonths').textContent=res.months<12?`${res.months}mo`:`${Math.floor(res.months/12)}y ${res.months%12}m`;
+      document.getElementById('nfcuInterest').textContent=`~${fmt(res.totalInterest,0)} interest`;
+      const tip=document.getElementById('nfcuTip');
+      if(nfcuExtra>0&&minRes){const saved=minRes.totalInterest-res.totalInterest;const ms=minRes.months-res.months;tip.textContent=`+$${nfcuExtra}/mo saves ~${fmt(saved,0)} interest, ${ms} month${ms!==1?'s':''} sooner.`;tip.className='ntip good';}
+      else if(minRes){tip.textContent=`At minimum, costs ~${fmt(minRes.totalInterest,0)} over ${minRes.months} months. Any extra saves significantly.`;tip.className='ntip';}
+    }
+  }
+
+  // ── Snowball page ──
+  const extra=parseFloat(document.getElementById('extraPayment').value)||0;
+  const{months,totalInterest,log,ordered}=runSnowball(extra);
+  const{months:baseMonths,totalInterest:baseInterest}=runSnowball(0);
+
+  const totalDebt=data.bnpl.reduce((s,b)=>s+(b.remaining||0),0)+
+    data.loans.reduce((s,l)=>s+l.balance,0)+
+    data.cars.reduce((s,c)=>s+c.balance,0);
+  const highInt=data.loans.reduce((s,l)=>s+l.balance,0);
+  const lowInt=data.cars.reduce((s,c)=>s+c.balance,0);
+  const bnplBal=data.bnpl.reduce((s,b)=>s+(b.remaining||0),0);
+
+  document.getElementById('sbTotalDebt').textContent=fmt(totalDebt);
+  document.getElementById('sbHighInterest').textContent=fmt(highInt);
+  document.getElementById('sbLowInterest').textContent=fmt(lowInt);
+  document.getElementById('sbBnpl').textContent=fmt(bnplBal);
+  document.getElementById('sbBaseInterest').textContent=fmt(baseInterest,0);
+
+  const bpo=new Date();bpo.setMonth(bpo.getMonth()+baseMonths);
+  document.getElementById('sbBasePayoff').textContent=bpo.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+
+  const po=new Date();po.setMonth(po.getMonth()+months);
+  document.getElementById('sbPayoffDate').textContent=po.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  document.getElementById('sbMonths').textContent=months<12?`${months} months`:`${Math.floor(months/12)}y ${months%12}m`;
+  document.getElementById('sbInterest').textContent=fmt(totalInterest,0);
+  const saved=baseInterest-totalInterest;
+  document.getElementById('sbSaved').textContent=saved>0?`+${fmt(saved,0)}`:'$0';
+
+  // Debt order list
+  const payoffMap={};
+  const seenLog=new Set();
+  for(const{name,month:m} of log){if(!seenLog.has(name)){payoffMap[name]=m;seenLog.add(name);}}
+
+  const listEl=document.getElementById('debtOrderList');
+  let html='';
+  for(let i=0;i<ordered.length;i++){
+    const d=ordered[i];
+    const isTarget=i===0&&d.bal>0.01;
+    const mo=payoffMap[d.name];
+    const po2=mo?new Date():'';
+    if(po2)po2.setMonth&&po2.setMonth(po2.getMonth()+mo);
+    const poLabel=po2&&po2.toLocaleDateString?po2.toLocaleDateString('en-US',{month:'short',year:'numeric'}):'—';
+    const pct=Math.min(100,Math.max(2,100-(d.bal/(d.bal+d.pmt*12))*100));
+    const aprLabel=d.apr>0?`${d.apr}% APR · `:'0% · ';
+    html+=`
+      <div class="debt-item ${isTarget?'target':''}">
+        <div class="debt-rank">${i+1}</div>
+        <div class="debt-info">
+          <div class="debt-name">${d.name}${isTarget?' 🎯':''}</div>
+          <div class="debt-meta">${aprLabel}$${d.pmt}/mo min</div>
+          <div class="debt-bar-wrap">
+            <div class="debt-bar-bg"><div class="debt-bar-fg" style="width:${100-pct}%;background:${d.apr>=18?'var(--red)':d.apr>=6?'var(--blue)':'var(--accent)'}"></div></div>
+          </div>
+        </div>
+        <div class="debt-right">
+          <div class="debt-bal" style="color:${d.apr>=18?'var(--red)':d.apr>=6?'var(--blue)':'var(--accent)'}">${fmt(d.bal,0)}</div>
+          <div class="debt-payoff ${mo&&mo<=6?'soon':''}">${poLabel}</div>
+        </div>
+      </div>`;
+  }
+  listEl.innerHTML=html;
+}
+
+function renderBills(containerId,bills,type,totalId){
+  const sorted=[...bills].sort((a,b)=>a.daysUntil-b.daysUntil);
+  let html='',total=0;
+  for(const b of sorted){
+    total+=b.amount;
+    const wc=b.inWindow?'in-window':'';
+    const sc=b.daysUntil<=0?'urgent':b.inWindow?'urgent':b.daysUntil<=7?'soon':'later';
+    const st=b.daysUntil<=0?'⚠ due today':b.inWindow?`due ${monthDay(b.nextDate)} · before payday`:b.daysUntil===1?'tomorrow':`in ${b.daysUntil}d`;
+    const remHtml=b.remaining!=null?`<div class="brem">${fmt(b.remaining,2)} left</div>`:(b.balance!=null?`<div class="brem">${fmt(b.balance,0)} left</div>`:'');
+    html+=`<div class="bill-item ${wc}"><div class="bicon">${b.icon}</div><div class="bname">${b.name}</div><div class="bright"><div class="bamt ${type}">${fmt(-b.amount)}</div><div class="bstatus ${sc}">${st}</div>${remHtml}</div></div>`;
+  }
+  document.getElementById(containerId).innerHTML=html;
+  document.getElementById(totalId).textContent=fmt(-total);
+}
+
+// ── Modal ──
+function buildEd(id,arr,key){
+  document.getElementById(id).innerHTML=arr.map((b,i)=>`
+    <div class="mrow-edit">
+      <div class="mrow-icon">${b.icon}</div>
+      <div class="mrow-name">${b.name}</div>
+      <span class="msmall">day</span>
+      <input class="mdayinput" type="number" inputmode="numeric" value="${b.day}" min="1" max="31" onchange="upd('${key}',${i},'day',this.value)">
+      <span class="msmall">$</span>
+      <input class="minput" type="number" inputmode="decimal" value="${b.amount}" onchange="upd('${key}',${i},'amount',this.value)">
+    </div>`).join('');
+}
+function buildLoanEd(){
+  document.getElementById('loanEd').innerHTML=data.loans.map((l,i)=>`
+    <div class="mrow-edit">
+      <div class="mrow-icon">${l.icon}</div>
+      <div class="mrow-name">${l.name}</div>
+      <span class="msmall">bal</span>
+      <input class="minput" type="number" inputmode="decimal" value="${l.balance}" onchange="updLoan(${i},'balance',this.value)" style="width:90px">
+      <span class="msmall">$</span>
+      <input class="minput" type="number" inputmode="decimal" value="${l.amount}" onchange="updLoan(${i},'amount',this.value)">
+    </div>`).join('');
+}
+function buildCarEd(){
+  document.getElementById('carEd').innerHTML=data.cars.map((c,i)=>`
+    <div class="mrow-edit">
+      <div class="mrow-icon">${c.icon}</div>
+      <div class="mrow-name">${c.name}</div>
+      <span class="msmall">bal</span>
+      <input class="minput" type="number" inputmode="decimal" value="${c.balance}" onchange="updCar(${i},'balance',this.value)" style="width:90px">
+      <span class="msmall">$</span>
+      <input class="minput" type="number" inputmode="decimal" value="${c.amount}" onchange="updCar(${i},'amount',this.value)">
+    </div>`).join('');
+}
+function buildPcEd(){
+  document.getElementById('paycheckEd').innerHTML=data.paychecks.map((p,i)=>`
+    <div class="mrow-edit">
+      <div class="mrow-icon">💸</div>
+      <div class="mrow-name">${p.label}</div>
+      <span class="msmall">day</span>
+      <input class="mdayinput" type="number" inputmode="numeric" value="${p.day}" min="1" max="31" onchange="updPc(${i},'day',this.value)">
+      <span class="msmall">$</span>
+      <input class="minput" type="number" inputmode="decimal" value="${p.amount}" onchange="updPc(${i},'amount',this.value)">
+    </div>`).join('');
+}
+
+function upd(key,i,field,val){data[key][i][field]=field==='day'?parseInt(val):parseFloat(val);save(data);recalc()}
+function updLoan(i,field,val){data.loans[i][field]=parseFloat(val);save(data);recalc()}
+function updCar(i,field,val){data.cars[i][field]=parseFloat(val);save(data);recalc()}
+function updPc(i,field,val){data.paychecks[i][field]=field==='day'?parseInt(val):parseFloat(val);save(data);recalc()}
+
+function openModal(){buildPcEd();buildEd('fixedEd',data.fixed,'fixed');buildEd('bnplEd',data.bnpl,'bnpl');buildCarEd();buildLoanEd();document.getElementById('modalOverlay').classList.add('open')}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');recalc()}
+function handleOverlayClick(e){if(e.target===document.getElementById('modalOverlay'))closeModal()}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const idx={balance:0,bills:1,snowball:2}[name];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+recalc();
+</script>
+
+</body>
+</html>
